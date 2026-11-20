@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة جزء عمّ التفاعلية | Juz Amma Quiz</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f5132;
+            --primary-light: #198754;
+            --gold: #d4af37;
+            --bg: #f4f7f5;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Cairo', 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(#d4af3722 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary), #083320);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .logo-title { font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+        .lang-btn {
+            background: var(--gold);
+            color: #083320;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+        .lang-btn:hover { transform: scale(1.05); }
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .quiz-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 750px;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 2px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        .quiz-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--gold), var(--primary));
+        }
+        .start-screen, .result-screen { text-align: center; }
+        .start-screen h1 { color: var(--primary); margin-bottom: 15px; font-size: 2rem; }
+        .start-screen p { color: #475569; margin-bottom: 25px; font-size: 1.1rem; line-height: 1.7; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--gold);
+            padding: 14px 40px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-2px); }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .badge {
+            background: #e6f4ea;
+            color: var(--primary);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .timer-box {
+            background: #fff8e1;
+            color: #b45309;
+            border: 1px solid var(--gold);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .timer-box.danger { background: #fee2e2; color: #dc2626; border-color: #dc2626; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .q-type {
+            display: inline-block;
+            color: var(--gold);
+            background: #083320;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .question-text {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.8;
+            color: #0f172a;
+        }
+        .quran-verses {
+            font-family: 'Amiri', serif;
+            background: #fdfbf7;
+            border-right: 4px solid var(--gold);
+            border-left: 4px solid var(--gold);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-top: 10px;
+            line-height: 2.1;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+        .option-btn {
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: inherit;
+        }
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); background: #f0fdf4; }
+        .option-btn.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+        .option-btn.wrong { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+        .celebration-banner {
+            background: linear-gradient(135deg, #083320, var(--primary));
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid var(--gold);
+            margin: 20px 0;
+            position: relative;
+        }
+        .celebration-banner h2 { color: var(--gold); font-size: 1.8rem; margin-bottom: 10px; }
+        .dua-text { font-family: 'Amiri', serif; font-size: 1.6rem; color: #fef08a; margin: 10px 0; }
+        .score-circle {
+            width: 130px; height: 130px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--gold);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            border: 4px solid var(--gold);
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+        footer {
+            background: #083320;
+            color: #e2e8f0;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 3px solid var(--gold);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        footer span { color: var(--gold); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+    <div class="logo-title" id="header-title">📖 مسابقة جزء عمّ التعليمية</div>
+    <button class="lang-btn" onclick="toggleLanguage()" id="lang-toggle">English</button>
+</header>
+
+<main>
+    <div class="quiz-card">
+        <div id="start-screen" class="start-screen">
+            <h1 id="welcome-title">اختبر معلوماتك في جزء عمّ</h1>
+            <p id="welcome-desc">
+                تتكون المسابقة من <strong>60 سؤالاً</strong> متنوعاً (معاني الكلمات، إكمال الآيات، ومعرفة اسم السورة من خلال 4 آيات).<br>
+                مدة كل سؤال <strong>40 ثانية</strong> فقط. حقق أكثر من <strong>80%</strong> للحصول على وسام التميز!
+            </p>
+            <button class="btn-primary" onclick="startQuiz()" id="start-btn">ابدأ المسابقة الآن</button>
+        </div>
+
+        <div id="quiz-screen" class="// سؤال 1
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (النَّبَإِ الْعَظِيمِ) في سورة النبأ؟", en: "What is the meaning of (An-Naba' Al-Adheem) in Surah An-Naba?" },
+options: { ar: ["القرآن الكريم والبعث", "يوم الهجرة", "بناء الكعبة", "غزوة بدر"], en: ["The Quran & Resurrection", "The Day of Hijrah", "Building the Kaaba", "Battle of Badr"] },
+ans: 0
+},
+// سؤال 2
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى قوله تعالى: (وَجَعَلْنَا الْجِبَالَ أَوْتَادًا)؟", en: "What does (Awtada) mean in 'And the mountains as stakes'?" },
+options: { ar: ["تثبت الأرض كالأوتاد", "عالية جداً", "مغطاة بالثلوج", "مصدر للمياه"], en: ["Pegs/stakes stabilizing the earth", "Very high", "Covered in snow", "Source of water"] },
+ans: 0
+},
+// سؤال 3
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (الْمُعْصِرَاتِ) في قوله تعالى: (وَأَنزَلْنَا مِنَ الْمُعْصِرَاتِ مَاءً ثَجَّاجًا)؟", en: "What is the meaning of (Al-Mu'sirat)?" },
+options: { ar: ["السحب المملوءة بالماء", "الأنهار الجارية", "الآبار العميقة", "الرياح الشديدة"], en: ["Rain-laden clouds", "Flowing rivers", "Deep wells", "Strong winds"] },
+ans: 0
+},
+// سؤال 4
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (الطَّامَّةُ الْكُبْرَىٰ) في سورة النازعات؟", en: "What does (At-Tammah Al-Kubra) refer to?" },
+options: { ar: ["القيامة التي تعم وتغلب كل شيء", "الريح العاصفة", "الزلزال الشديد", "الغرق العظيم"], en: ["The Greatest Overwhelming Calamity (Day of Judgment)", "Stormy wind", "Severe earthquake", "Great flood"] },
+ans: 0
+},
+// سؤال 5
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (سَفَرَةٍ) في قوله تعالى: (بِأَيْدِي سَفَرَةٍ)؟", en: "What is the meaning of (Safarah) in Surah Abasa?" },
+options: { ar: ["الملائكة الكتبة", "المسافرون في الأرض", "التجار", "الأنبياء"], en: ["Noble recording Angels", "Travelers on earth", "Merchants", "Prophets"] },
+ans: 0
+},
+// سؤال 6
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (الصَّاخَّةُ) في سورة عبس؟", en: "What does (As-Sakhkhah) mean?" },
+options: { ar: ["النفخة الثانية التي تصخ الآذان", "الرياح الباردة", "الظلام الدامس", "الصخور العظيمة"], en: ["The Deafening Blast of the Horn", "Cold winds", "Pitch darkness", "Huge rocks"] },
+ans: 0
+},
+// سؤال 7
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (الْجَوَارِ الْكُنَّسِ) في سورة التكوير؟", en: "What does (Al-Jawar Al-Kunnas) mean?" },
+options: { ar: ["النجوم والكواكب التي تجري وتختفي", "السفن في البحر", "الخيول السريعة", "الطيور المهاجرة"], en: ["Stars and planets that move and disappear", "Ships at sea", "Fast horses", "Migratory birds"] },
+ans: 0
+},
+// سؤال 8
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (تَسْنِيمٍ) في سورة المطففين؟", en: "What is (Tasneem) in Surah Al-Mutaffifin?" },
+options: { ar: ["أشرف شراب في الجنة ينزل من علو", "جبل في مكة", "نهر في الدنيا", "اسم ملك"], en: ["The highest and purest spring/drink in Paradise", "A mountain in Makkah", "A worldly river", "Name of an angel"] },
+ans: 0
+},
+// سؤال 9
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (لَتَرْكَبُنَّ طَبَقًا عَن طَبَقٍ)؟", en: "What does (Tabaqan 'an Tabaq) mean?" },
+options: { ar: ["حالاً بعد حال وأطواراً متعددة", "الصعود إلى السماء", "ركوب الدواب", "بناء الطوابق"], en: ["Stage after stage / state after state", "Ascending to the sky", "Riding animals", "Building floors"] },
+ans: 0
+},
+// سؤال 10
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (الْأُخْدُودِ) في سورة البروج؟", en: "What is the meaning of (Al-Ukhdood)?" },
+options: { ar: ["الشق العظيم المستطيل في الأرض", "الجبل المرتفع", "البئر العميق", "القصر الكبير"], en: ["A deep trench/ditch dug in the earth", "High mountain", "Deep well", "Grand palace"] },
+ans: 0
+},
+// سؤال 11
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (النَّجْمُ الثَّاقِبُ) في سورة الطارق؟", en: "What does (An-Najm Ath-Thaqib) mean?" },
+options: { ar: ["النجم المضيء الذي يثقب الظلام بنوره", "النجم الساقط", "القمر المكتمل", "الشمس عند الغروب"], en: ["The piercing star whose light penetrates darkness", "Falling star", "Full moon", "Setting sun"] },
+ans: 0
+},
+// سؤال 12
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (غُثَاءً أَحْوَىٰ) في سورة الأعلى؟", en: "What does (Ghutha'an Ahwa) mean?" },
+options: { ar: ["هشيماً يابساً أسود اللون", "نباتاً أخضر طرياً", "ماءً عذباً", "سحاباً أبيض"], en: ["Dry, dark/blackened stubble", "Fresh green plants", "Fresh water", "White clouds"] },
+ans: 0
+},
+// سؤال 13
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (ضَرِيعٍ) في سورة الغاشية؟", en: "What is (Daree') in Surah Al-Ghashiyah?" },
+options: { ar: ["نبات ذو شوك مرّ وهو طعام أهل النار", "فاكهة أهل الجنة", "شراب بارد", "نوع من الحجارة"], en: ["A bitter, thorny plant (food of Hellfire)", "Fruit of Paradise", "Cold drink", "A type of stone"] },
+ans: 0
+},
+// سؤال 14
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (الْوَتْرِ) في قوله تعالى: (وَالشَّفْعِ وَالْوَتْرِ)؟", en: "What does (Al-Watr) mean?" },
+options: { ar: ["الفرد (أو يوم عرفة / الله الواحد)", "الزوج", "الليل", "النهار"], en: ["The Odd (e.g., Day of Arafah / Allah the One)", "The Even", "The Night", "The Day"] },
+ans: 0
+},
+// سؤال 15
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (كَبَدٍ) في قوله تعالى: (لَقَدْ خَلَقْنَا الْإِنسَانَ فِي كَبَدٍ)؟", en: "What does (Kabad) mean in Surah Al-Balad?" },
+options: { ar: ["تعب ومشقة ومكابدة", "راحة ونعيم", "غفلة ونوم", "قوة وسلطان"], en: ["Toil, hardship, and struggle", "Comfort and bliss", "Heedlessness", "Power and authority"] },
+ans: 0
+},
+// سؤال 16
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (فَكُّ رَقَبَةٍ) في سورة البلد؟", en: "What is the meaning of (Fakku Raqabah)?" },
+options: { ar: ["عتق مملوك أو تحرير أسير", "إطعام جائع", "بناء مسجد", "سقي الماء"], en: ["Freeing a slave or captive", "Feeding the hungry", "Building a mosque", "Giving water"] },
+ans: 0
+},
+// سؤال 17
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (دَسَّاهَا) في قوله تعالى: (وَقَدْ خَابَ مَن دَسَّاهَا)؟", en: "What does (Dassaha) mean in Surah Ash-Shams?" },
+options: { ar: ["أخفاها وأذلها بالمعاصي", "طهرها وزكاها", "أكرمها بالعلم", "نصرها"], en: ["Corrupted and buried his soul in sin", "Purified it", "Honored it with knowledge", "Supported it"] },
+ans: 0
+},
+// سؤال 18
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (لَنَسْفَعًا بِالنَّاصِيَةِ) في سورة العلق؟", en: "What does (Lanasfa'an bin-Nasiyah) mean?" },
+options: { ar: ["لنأخذنّ بمقدمة رأسه بعنف إلى النار", "لنكرمنّ وجهه", "لنرفعنّ قدره", "لنغفرنّ ذنبه"], en: ["We will surely drag him by the forelock", "We will honor his face", "We will raise his rank", "We will forgive him"] },
+ans: 0
+},
+// سؤال 19
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى (الْعَادِيَاتِ ضَبْحًا)؟", en: "What is the meaning of (Al-'Adiyat Dabha)?" },
+options: { ar: ["الخيل التي تعدو ويُسمع صوت أنفاسها", "الإبل في الصحراء", "الرياح العاصفة", "الطيور الجارحة"], en: ["Warhorses running with panting breath", "Camels in the desert", "Stormy winds", "Birds of prey"] },
+ans: 0
+},
+// سؤال 20
+{
+type: { ar: "معاني الكلمات", en: "Word Meanings" },
+q: { ar: "ما معنى كلمة (الصَّمَدُ) في سورة الإخلاص؟", en: "What does (As-Samad) mean in Surah Al-Ikhlas?" },
+options: { ar: ["السيد الذي يُقصد في الحوائج كلها ولا يحتاج لأحد", "الخالق من عدم", "الرحيم بعباده", "الشديد العقاب"], en: ["The Eternal Refuge upon whom all depend", "Creator from nothing", "Most Merciful", "Severe in punishment"] },
+ans: 0
+},
+// ==================== 2. أكمل الآية (21 - 40) ====================
+// سؤال 21
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿إِنَّ لِلْمُتَّقِينَ مَفَازًا ۝ حَدَائِقَ وَ........﴾", en: "Complete the verse: ﴿Inna lil-muttaqeena mafaza ۝ Hada'iqa wa ........﴾" },
+options: { ar: ["أَعْنَابًا", "أَنْهَارًا", "رُمَّانًا", "نَخِيلًا"], en: ["A'naba (vineyards)", "Anhara (rivers)", "Rummana (pomegranates)", "Nakheela (palm trees)"] },
+ans: 0
+},
+// سؤال 22
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَأَمَّا مَن طَغَىٰ ۝ وَآثَرَ الْحَيَاةَ الدُّنْيَا ۝ فَإِنَّ الْجَحِيمَ هِيَ ........﴾", en: "Complete: ﴿Fa-amma man tagha ۝ Wa atharal-hayatad-dunya ۝ Fa-innal-jaheema hiyal-........﴾" },
+options: { ar: ["الْمَأْوَىٰ", "الْمَصِيرُ", "الْمَقَرُّ", "النَّارُ"], en: ["Al-Ma'wa (the refuge)", "Al-Maseer", "Al-Maqarr", "An-Nar"] },
+ans: 0
+},
+// سؤال 23
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿كَلَّا لَمَّا يَقْضِ مَا ........﴾", en: "Complete the verse: ﴿Kalla lamma yaqdi ma ........﴾" },
+options: { ar: ["أَمَرَهُ", "خَلَقَهُ", "رَزَقَهُ", "وَعَدَهُ"], en: ["Amarah (He commanded him)", "Khalaqah", "Razaqah", "Wa'adah"] },
+ans: 0
+},
+// سؤال 24
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿وَإِذَا الصُّحُفُ ........﴾", en: "Complete the verse: ﴿Wa idhas-suhufu ........﴾" },
+options: { ar: ["نُشِرَتْ", "طُوِيَتْ", "كُشِطَتْ", "سُعِّرَتْ"], en: ["Nushirat (are spread open)", "Tuwiyat", "Kushitat", "Su''irat"] },
+ans: 0
+},
+// سؤال 25
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿يَا أَيُّهَا الْإِنسَانُ مَا غَرَّكَ بِرَبِّكَ ........﴾", en: "Complete: ﴿Ya ayyuhal-insanu ma gharraka bi-Rabbikal-........﴾" },
+options: { ar: ["الْكَرِيمِ", "الْعَظِيمِ", "الرَّحِيمِ", "الْحَكِيمِ"], en: ["Al-Kareem (the Generous)", "Al-Adheem", "Ar-Raheem", "Al-Hakeem"] },
+ans: 0
+},
+// سؤال 26
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿خِتَامُهُ مِسْكٌ ۚ وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ ........﴾", en: "Complete: ﴿Khitamuhu misk, wa fee dhalika falyatanafasil-........﴾" },
+options: { ar: ["الْمُتَنَافِسُونَ", "الصَّالِحُونَ", "الْمُؤْمِنُونَ", "الْمُتَّقُونَ"], en: ["Al-Mutanafisoon (the competitors)", "As-Salihoon", "Al-Mu'minoon", "Al-Muttaqoon"] },
+ans: 0
+},
+// سؤال 27
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَسَوْفَ يُحَاسَبُ حِسَابًا ........﴾", en: "Complete the verse: ﴿Fasawfa yuhasabu hisaban ........﴾" },
+options: { ar: ["يَسِيرًا", "عَسِيرًا", "كَبِيرًا", "شَدِيدًا"], en: ["Yaseera (an easy account)", "'Aseera", "Kabeera", "Shadeeda"] },
+ans: 0
+},
+// سؤال 28
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿إِنَّ بَطْشَ رَبِّكَ ........﴾", en: "Complete the verse: ﴿Inna batsha Rabbika ........﴾" },
+options: { ar: ["لَشَدِيدٌ", "لَعَظِيمٌ", "لَقَرِيبٌ", "لَحَكِيمٌ"], en: ["Lashadeed (is severe)", "La'adheem", "Laqareeb", "Lahakeem"] },
+ans: 0
+},
+// سؤال 29
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿إِنَّهُ عَلَىٰ رَجْعِهِ ........﴾", en: "Complete the verse: ﴿Innahu 'ala raj'ihi ........﴾" },
+options: { ar: ["لَقَادِرٌ", "لَعَالِمٌ", "لَشَهِيدٌ", "لَحَفِيظٌ"], en: ["Laqadir (is Able)", "La'alim", "Lashaheed", "Lahafeedh"] },
+ans: 0
+},
+// سؤال 30
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿قَدْ أَفْلَحَ مَن ........﴾", en: "Complete the verse: ﴿Qad aflaha man ........﴾" },
+options: { ar: ["تَزَكَّىٰ", "صَلَّىٰ", "آمَنَ", "اتَّقَىٰ"], en: ["Tazakka (purifies himself)", "Salla", "Amana", "Ittaqa"] },
+ans: 0
+},
+// سؤال 31
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَذَكِّرْ إِنَّمَا أَنتَ ........﴾", en: "Complete the verse: ﴿Fadhakkir innama anta ........﴾" },
+options: { ar: ["مُذَكِّرٌ", "نَذِيرٌ", "بَشِيرٌ", "رَسُولٌ"], en: ["Mudhakkir (a reminder)", "Nadheer", "Basheer", "Rasool"] },
+ans: 0
+},
+// سؤال 32
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿يَا أَيَّتُهَا النَّفْسُ ........﴾", en: "Complete the verse: ﴿Ya ayyatuhan-nafsul-........﴾" },
+options: { ar: ["الْمُطْمَئِنَّةُ", "اللَّوَّامَةُ", "الْأَمَّارَةُ", "الزَّكِيَّةُ"], en: ["Al-Mutma'innah (the reassured soul)", "Al-Lawwamah", "Al-Ammarah", "Az-Zakiyyah"] },
+ans: 0
+},
+// سؤال 33
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿ثُمَّ كَانَ مِنَ الَّذِينَ آمَنُوا وَتَوَاصَوْا بِالصَّبْرِ وَتَوَاصَوْا ........﴾", en: "Complete: ﴿...wa tawasaw bis-sabri wa tawasaw ........﴾" },
+options: { ar: ["بِالْمَرْحَمَةِ", "بِالْحَقِّ", "بِالْخَيْرِ", "بِالتَّقْوَىٰ"], en: ["Bil-Marhamah (compassion)", "Bil-Haqq", "Bil-Khayr", "Bit-Taqwa"] },
+ans: 0
+},
+// سؤال 34
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَأَلْهَمَهَا فُجُورَهَا ........﴾", en: "Complete the verse: ﴿Fa-alhamaha fujooraha ........﴾" },
+options: { ar: ["وَتَقْوَاهَا", "وَهُدَاهَا", "وَغِنَاهَا", "وَرِضَاهَا"], en: ["Wa taqwaha (and its righteousness)", "Wa hudaha", "Wa ghinaha", "Wa ridaha"] },
+ans: 0
+},
+// سؤال 35
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿وَمَا لِأَحَدٍ عِندَهُ مِن نِّعْمَةٍ ........﴾", en: "Complete: ﴿Wa ma li-ahadin 'indahu min ni'matin ........﴾" },
+options: { ar: ["تُجْزَىٰ", "تُعْطَىٰ", "تُبْقَىٰ", "تُحْصَىٰ"], en: ["Tujza (to be recompensed)", "Tu'ta", "Tubqa", "Tuhsa"] },
+ans: 0
+},
+// سؤال 36
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿وَلَسَوْفَ يُعْطِيكَ رَبُّكَ ........﴾", en: "Complete the verse: ﴿Wa lasawfa yu'teeka Rabbuka ........﴾" },
+options: { ar: ["فَتَرْضَىٰ", "فَتَشْكُرُ", "فَتَفْرَحُ", "فَتَسْعَدُ"], en: ["Fatarda (and you will be satisfied)", "Fatashkur", "Fatafrah", "Fatas'ad"] },
+ans: 0
+},
+// سؤال 37
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَإِنَّ مَعَ الْعُسْرِ ........﴾", en: "Complete the verse: ﴿Fa-inna ma'al-'usri ........﴾" },
+options: { ar: ["يُسْرًا", "فَرَجًا", "أَجْرًا", "نَصْرًا"], en: ["Yusra (ease)", "Faraja", "Ajra", "Nasra"] },
+ans: 0
+},
+// سؤال 38
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿لَقَدْ خَلَقْنَا الْإِنسَانَ فِي أَحْسَنِ ........﴾", en: "Complete: ﴿Laqad khalaqnal-insana fee ahsani ........﴾" },
+options: { ar: ["تَقْوِيمٍ", "صُورَةٍ", "خَلْقٍ", "نَعِيمٍ"], en: ["Taqweem (stature/form)", "Soorah", "Khalq", "Na'eem"] },
+ans: 0
+},
+// سؤال 39
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ ........﴾", en: "Complete the verse: ﴿Salamun hiya hatta matla'il-........﴾" },
+options: { ar: ["الْفَجْرِ", "الشَّمْسِ", "النَّهَارِ", "الصُّبْحِ"], en: ["Al-Fajr (the dawn)", "Ash-Shams", "An-Nahar", "As-Subh"] },
+ans: 0
+},
+// سؤال 40
+{
+type: { ar: "أكمل الآية", en: "Complete the Verse" },
+q: { ar: "أكمل قوله تعالى: ﴿فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا ........﴾", en: "Complete: ﴿Faman ya'mal mithqala dharratin khayran ........﴾" },
+options: { ar: ["يَرَهُ", "يَجِدْهُ", "يُجْزَهُ", "يَنَلْهُ"], en: ["Yarah (will see it)", "Yajidhu", "Yujzahu", "Yanalhu"] },
+ans: 0
+},
+// ==================== 3. اذكر اسم السورة من 4 آيات (41 - 60) ====================
+// سؤال 41
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿عَمَّ يَتَسَاءَلُونَ ۝ عَنِ النَّبَإِ الْعَظِيمِ ۝ الَّذِي هُمْ فِيهِ مُخْتَلِفُونَ ۝ كَلَّا سَيَعْلَمُونَ﴾",
+en: "Which Surah contains these four verses?﴿'Amma yatasa'aloon ۝ 'Anin-naba'il-'adheem ۝ Alladhee hum feehi mukhtalifoon ۝ Kalla saya'lamoon﴾"
+},
+options: { ar: ["سورة النبأ", "سورة النازعات", "سورة التكوير", "سورة الانفطار"], en: ["Surah An-Naba", "Surah An-Nazi'at", "Surah At-Takwir", "Surah Al-Infitar"] },
+ans: 0
+},
+// سؤال 42
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿يَوْمَ تَرْجُفُ الرَّاجِفَةُ ۝ تَتْبَعُهَا الرَّادِفَةُ ۝ قُلُوبٌ يَوْمَئِذٍ وَاجِفَةٌ ۝ أَبْصَارُهَا خَاشِعَةٌ﴾",
+en: "Which Surah contains these four verses?﴿Yawma tarjufur-rajifah ۝ Tatba'uhar-radifah ۝ Quloobun yawma'idhin wajifah ۝ Absaruha khashi'ah﴾"
+},
+options: { ar: ["سورة النازعات", "سورة عبس", "سورة الغاشية", "سورة القارعة"], en: ["Surah An-Nazi'at", "Surah Abasa", "Surah Al-Ghashiyah", "Surah Al-Qari'ah"] },
+ans: 0
+},
+// سؤال 43
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿فَلْيَنظُرِ الْإِنسَانُ إِلَىٰ طَعَامِهِ ۝ أَنَّا صَبَبْنَا الْمَاءَ صَبًّا ۝ ثُمَّ شَقَقْنَا الْأَرْضَ شَقًّا ۝ فَأَنبَتْنَا فِيهَا حَبًّا﴾",
+en: "Which Surah contains these four verses?﴿Falyandhuril-insanu ila ta'amih ۝ Anna sababnal-ma'a sabba ۝ Thumma shaqaqnal-arda shaqqa ۝ Fa-anbatna feeha habba﴾"
+},
+options: { ar: ["سورة عبس", "سورة النبأ", "سورة الأعلى", "سورة البلد"], en: ["Surah Abasa", "Surah An-Naba", "Surah Al-A'la", "Surah Al-Balad"] },
+ans: 0
+},
+// سؤال 44
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿إِذَا الشَّمْسُ كُوِّرَتْ ۝ وَإِذَا النُّجُومُ انكَدَرَتْ ۝ وَإِذَا الْجِبَالُ سُيِّرَتْ ۝ وَإِذَا الْعِشَارُ عُطِّلَتْ﴾",
+en: "Which Surah contains these four verses?﴿Idhash-shamsu kuwwirat ۝ Wa idhan-nujoomunkadarat ۝ Wa idhal-jibalu suyyirat ۝ Wa idhal-'isharu 'uttilat﴾"
+},
+options: { ar: ["سورة التكوير", "سورة الانفطار", "سورة الانشقاق", "سورة الزلزلة"], en: ["Surah At-Takwir", "Surah Al-Infitar", "Surah Al-Inshiqaq", "Surah Az-Zalzalah"] },
+ans: 0
+},
+// سؤال 45
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿إِذَا السَّمَاءُ انفَطَرَتْ ۝ وَإِذَا الْكَوَاكِبُ انتَثَرَتْ ۝ وَإِذَا الْبِحَارُ فُجِّرَتْ ۝ وَإِذَا الْقُبُورُ بُعْثِرَتْ﴾",
+en: "Which Surah contains these four verses?﴿Idhas-sama'un-fatarat ۝ Wa idhal-kawakibun-tatharat ۝ Wa idhal-biharu fujjirat ۝ Wa idhal-qubooru bu'thirat﴾"
+},
+options: { ar: ["سورة الانفطار", "سورة التكوير", "سورة المطففين", "سورة البروج"], en: ["Surah Al-Infitar", "Surah At-Takwir", "Surah Al-Mutaffifin", "Surah Al-Burooj"] },
+ans: 0
+},
+// سؤال 46
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿وَيْلٌ لِّلْمُطَفِّفِينَ ۝ الَّذِينَ إِذَا اكْتَالُوا عَلَى النَّاسِ يَسْتَوْفُونَ ۝ وَإِذَا كَالُوهُمْ أَو وَّزَنُوهُمْ يُخْسِرُونَ ۝ أَلَا يَظُنُّ أُولَٰئِكَ أَنَّهُم مَّبْعُوثُونَ﴾",
+en: "Which Surah contains these four verses?﴿Waylul-lil-mutaffifeen ۝ Alladheena idhaktaloo 'alan-nasi yastawfoon ۝ Wa idha kaloohum aw wazanoohum yukhsiroon ۝ Ala yadhunnu ula'ika annahum mab'oothoon﴾"
+},
+options: { ar: ["سورة المطففين", "سورة الهمزة", "سورة الماعون", "سورة الفجر"], en: ["Surah Al-Mutaffifin", "Surah Al-Humazah", "Surah Al-Ma'un", "Surah Al-Fajr"] },
+ans: 0
+},
+// سؤال 47
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿إِذَا السَّمَاءُ انشَقَّتْ ۝ وَأَذِنَتْ لِرَبِّهَا وَحُقَّتْ ۝ وَإِذَا الْأَرْضُ مُدَّتْ ۝ وَأَلْقَتْ مَا فِيهَا وَتَخَلَّتْ﴾",
+en: "Which Surah contains these four verses?﴿Idhas-sama'un-shaqqat ۝ Wa adhinat li-Rabbiha wa huqqat ۝ Wa idhal-ardu muddat ۝ Wa alqat ma feeha wa takhallat﴾"
+},
+options: { ar: ["سورة الانشقاق", "سورة الانفطار", "سورة الطارق", "سورة الأعلى"], en: ["Surah Al-Inshiqaq", "Surah Al-Infitar", "Surah At-Tariq", "Surah Al-A'la"] },
+ans: 0
+},
+// سؤال 48
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿وَالسَّمَاءِ ذَاتِ الْبُرُوجِ ۝ وَالْيَوْمِ الْمَوْعُودِ ۝ وَشَاهِدٍ وَمَشْهُودٍ ۝ قُتِلَ أَصْحَابُ الْأُخْدُودِ﴾",
+en: "Which Surah contains these four verses?﴿Was-sama'i dhatil-burooj ۝ Wal-yawmil-maw'ood ۝ Wa shahidin wa mashhood ۝ Qutila ashabul-ukhdood﴾"
+},
+options: { ar: ["سورة البروج", "سورة الطارق", "سورة الشمس", "سورة الليل"], en: ["Surah Al-Burooj", "Surah At-Tariq", "Surah Ash-Shams", "Surah Al-Layl"] },
+ans: 0
+},
+// سؤال 49
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿وَالسَّمَاءِ وَالطَّارِقِ ۝ وَمَا أَدْرَاكَ مَا الطَّارِقُ ۝ النَّجْمُ الثَّاقِبُ ۝ إِن كُلُّ نَفْسٍ لَّمَّا عَلَيْهَا حَافِظٌ﴾",
+en: "Which Surah contains these four verses?﴿Was-sama'i wat-tariq ۝ Wa ma adraka mat-tariq ۝ An-najmuth-thaqib ۝ In kullu nafsil-lamma 'alayha hafidh﴾"
+},
+options: { ar: ["سورة الطارق", "سورة البروج", "سورة الفجر", "سورة الضحى"], en: ["Surah At-Tariq", "Surah Al-Burooj", "Surah Al-Fajr", "Surah Ad-Duha"] },
+ans: 0
+},
+// سؤال 50
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿سَبِّحِ اسْمَ رَبِّكَ الْأَعْلَى ۝ الَّذِي خَلَقَ فَسَوَّىٰ ۝ وَالَّذِي قَدَّرَ فَهَدَىٰ ۝ وَالَّذِي أَخْرَجَ الْمَرْعَىٰ﴾",
+en: "Which Surah contains these four verses?﴿Sabbihisma Rabbikal-A'la ۝ Alladhee khalaqa fasawwa ۝ Walladhee qaddara fahada ۝ Walladhee akhrajal-mar'a﴾"
+},
+options: { ar: ["سورة الأعلى", "سورة الغاشية", "سورة العلق", "سورة التين"], en: ["Surah Al-A'la", "Surah Al-Ghashiyah", "Surah Al-'Alaq", "Surah At-Tin"] },
+ans: 0
+},
+// سؤال 51
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿هَلْ أَتَاكَ حَدِيثُ الْغَاشِيَةِ ۝ وُجُوهٌ يَوْمَئِذٍ خَاشِعَةٌ ۝ عَامِلَةٌ نَّاصِبَةٌ ۝ تَصْلَىٰ نَارًا حَامِيَةً﴾",
+en: "Which Surah contains these four verses?﴿Hal ataka hadeethul-ghashiyah ۝ Wujoohun yawma'idhin khashi'ah ۝ 'Amilatun nasibah ۝ Tasla naran hamiyah﴾"
+},
+options: { ar: ["سورة الغاشية", "سورة القارعة", "سورة الفجر", "سورة التكاثر"], en: ["Surah Al-Ghashiyah", "Surah Al-Qari'ah", "Surah Al-Fajr", "Surah At-Takathur"] },
+ans: 0
+},
+// سؤال 52
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿وَالْفَجْرِ ۝ وَلَيَالٍ عَشْرٍ ۝ وَالشَّفْعِ وَالْوَتْرِ ۝ وَاللَّيْلِ إِذَا يَسْرِ﴾",
+en: "Which Surah contains these four verses?﴿Wal-fajr ۝ Wa layalin 'ashr ۝ Wash-shaf'i wal-watr ۝ Wal-layli idha yasr﴾"
+},
+options: { ar: ["سورة الفجر", "سورة الليل", "سورة الضحى", "سورة القدر"], en: ["Surah Al-Fajr", "Surah Al-Layl", "Surah Ad-Duha", "Surah Al-Qadr"] },
+ans: 0
+},
+// سؤال 53
+{
+type: { ar: "اذكر اسم السورة", en: "Identify the Surah" },
+q: {
+ar: "ما اسم السورة التي وردت فيها هذه الآيات الأربع؟﴿لَا أُقْسِمُ بِهَٰذَا الْبَلَدِ ۝ وَأَنتَ حِلٌّ بِهَٰذَا الْبَلَدِ ۝ وَوَالِدٍ وَمَا وَلَدَ ۝ لَقَدْ خَلَقْنَا الْإِنسَانَ فِي كَبَدٍ﴾",
+en: "Which Surah contains these four verses?﴿La uqsimu bihadhal-balad ۝ Wa anta hillun bihadhal-balad ۝ Wa walidin wa ma walad ۝ Laqad khalaqnal-insana fee kabad﴾"
+},
+options: { ar: ["سورة البلد", "سورة التين", "سورة قريش", "سورة العصر"], en: ["Surah Al-Balad", "Surah At-Tin", "Surah Quraysh", "Surah Al-'Asr"] },
+Something went wrong, and an AI response wasn't g">
+            <div class="top-bar">
+                <div class="badge" id="progress-text">السؤال 1 من 60</div>
+                <div class="timer-box" id="timer-box">⏱️ <span id="time-left">40</span>s</div>
+            </div>
+            <div class="q-type" id="q-type-badge">معاني الكلمات</div>
+            <div class="question-text" id="question-container"></div>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+
+        <div id="result-screen" class="result-screen hidden">
+            <div class="score-circle">
+                <span id="score-percent">0%</span>
+            </div>
+            <h2 id="score-details" style="margin-bottom: 15px;"></h2>
+            
+            <div id="celebration-box" class="celebration-banner hidden">
+                <h2 id="cel-title">🎉 مبارك لك هذا التفوق القرآني! 🎉</h2>
+                <div class="dua-text" id="dua-1">« اللَّهُمَّ اجْعَلْكَ مِنْ أَهْلِ الْقُرْآنِ وَخَاصَّتِهِ »</div>
+                <div class="dua-text" id="dua-2">« اللَّهُمَّ زِدْكَ عِلْمًا وَنُورًا وَبَرَكَةً »</div>
+            </div>
+
+            <div id="encourage-box" class="hidden" style="margin: 20px 0; color: #475569; font-size: 1.2rem;">
+                <p id="encourage-text">بارك الله فيك! واصل المراجعة والتدبر لتحقيق نسبة أعلى في المرة القادمة.</p>
+            </div>
+
+            <button class="btn-primary" onclick="startQuiz()" id="restart-btn">إعادة المحاولة</button>
+        </div>
+    </div>
+</main>
+
+<footer>
